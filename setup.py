@@ -2,25 +2,8 @@
 
 from setuptools import find_packages, setup
 
-# setup(
-#     name="Glomerulosclerosis",
-#     version="0.1.0",
-#     packages=find_packages(),
-#     install_requires=[
-#         # whatever dependencies
-#         "numpy",
-#         "histomicstk",
-#     ],
-#     entry_points={
-#         "girder_slicer_cli_web": [
-#             # Format: "CLIName = your_package.your_module:yourFunction"
-#             "Glomerulosclerosis = glom.cli:cliDescription"
-#         ],
-#     },
-# )
-
 setup(
-    name="GlomerulosclerosisPlugin",
+    name="gs",
     # use_scm_version={'local_scheme': prerelease_local_scheme},
     description="Glomerulosclerosis Computation",
     long_description_content_type="text/x-rst",
@@ -29,7 +12,7 @@ setup(
     url="https://github.com/adallen93/banff-lesion-scores",
     packages=find_packages(exclude=["tests", "*_test"]),
     package_dir={
-        "banff_lesion_scores": "gs",
+        "glomerulosclerosis": "glomerulosclerosis",
     },
     include_package_data=True,
     install_requires=[
