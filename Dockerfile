@@ -18,8 +18,9 @@ RUN pip install --no-cache-dir --upgrade pip setuptools && \
     pip install --no-cache-dir . --find-links https://girder.github.io/large_image_wheels && \
     rm -rf /root/.cache/pip/*
 
+# Switch to the CLI directory 
 WORKDIR $MY_PLUGIN_PATH/cli   
- 
+
 # Optionally show that your new CLI is recognized
 RUN python -m slicer_cli_web.cli_list_entrypoint --list_cli
 

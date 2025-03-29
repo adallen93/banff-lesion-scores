@@ -47,7 +47,7 @@ setup(
         # # large image sources
         # 'large-image[sources]',
         # 'girder-slicer-cli-web',
-        # 'girder-client',
+        "girder-client",
         # # cli
         # 'ctk-cli',
     ],

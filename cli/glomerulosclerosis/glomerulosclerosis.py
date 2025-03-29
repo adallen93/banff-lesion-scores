@@ -117,6 +117,9 @@ def configurations() -> dict[str, Any]:
             "saved as 'glomerulosclerosis.csv.'"
         ),
     )
+    parser.add_argument(
+        "--girderApiUrl", type=str, default=" ", help=("Girder API URL")
+    )
 
     # Create file paths
     args = parser.parse_args()
@@ -132,6 +135,7 @@ def configurations() -> dict[str, Any]:
 
 def main(configs: dict[str, str]) -> None:
     """Main."""
+    print(configs)
     # Load annotations using JSON
     with open(configs["ngsg_path"]) as file:
         ngsg = json.load(file)
@@ -153,6 +157,10 @@ def main(configs: dict[str, str]) -> None:
         writer = csv.DictWriter(file, fieldnames=gs.keys())
         writer.writeheader()
         writer.writerow(gs)
+    print("You made it! Congrats!")
+    print(gs)
+    print("Now. Let's print those pesky little configurations.")
+    print(configs)
 
 
 if __name__ == "__main__":
