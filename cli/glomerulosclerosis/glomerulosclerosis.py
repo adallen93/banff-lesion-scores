@@ -40,11 +40,13 @@ Author:
     Austin Allen, Kitware, Inc., 2025
 """
 
-import argparse
-import csv
+# import csv
 import json
-import os
 from typing import Any
+
+import numpy as np
+import scipy.stats as stats
+from slicer_cli_web import CLIArgumentParser
 
 
 def compute_gs(
@@ -63,73 +65,25 @@ def compute_gs(
         non_globally_sclerotic_glomeruli["annotation"]["elements"]
     )
     count_gsg = len(globally_sclerotic_glomeruli["annotation"]["elements"])
+    n = count_ngsg + count_gsg
 
     # Compute proportion of GSG
-    gsg_proportion = count_gsg / (count_gsg + count_ngsg)
+    gsg_proportion = count_gsg / n
+
+    # Compute 95% confidence interval
+    lower_bound = gsg_proportion + stats.norm.ppf(0.025) * np.sqrt(
+        gsg_proportion * (1 - gsg_proportion) / n
+    )
+    upper_bound = gsg_proportion + stats.norm.ppf(0.975) * np.sqrt(
+        gsg_proportion * (1 - gsg_proportion) / n
+    )
+    confidence_interval = f"[{round(lower_bound, 4)}, {round(upper_bound, 4)}]"
 
     return {
-        "Glomeruli Seen": count_gsg + count_ngsg,
+        "Glomeruli Seen": n,
         "Glomeruli Sclerosed #": count_gsg,
-        "Glomeruli Sclerosed %": gsg_proportion,
-    }
-
-
-def configurations() -> dict[str, Any]:
-    """CLI argument configurations."""
-    parser = argparse.ArgumentParser(
-        description="Glomerulosclerosis Configuration."
-    )
-
-    # Add arguments to the parser object
-    parser.add_argument(
-        "--annotation_directory",
-        type=str,
-        default=os.getcwd(),
-        help=(
-            "Directory path where glomeruli annotations are stored (default "
-            "is current working directory)."
-        ),
-    )
-    parser.add_argument(
-        "--gsg_filename",
-        type=str,
-        default="globally_sclerotic_glomeruli.json",
-        help=(
-            "Name of the file containing annotations for globally sclerotic "
-            "glomeruli."
-        ),
-    )
-    parser.add_argument(
-        "--ngsg_filename",
-        type=str,
-        default="non_globally_sclerotic_glomeruli.json",
-        help=(
-            "Name of the file containing annotations for non-globally "
-            "sclerotic glomeruli (i.e. normal glomeruli)."
-        ),
-    )
-    parser.add_argument(
-        "--results_directory",
-        type=str,
-        default=os.getcwd(),
-        help=(
-            "Name of the directory in which to store results. Results will be "
-            "saved as 'glomerulosclerosis.csv.'"
-        ),
-    )
-    parser.add_argument(
-        "--girderApiUrl", type=str, default=" ", help=("Girder API URL")
-    )
-
-    # Create file paths
-    args = parser.parse_args()
-    ngsg_path = f"{args.annotation_directory}/{args.ngsg_filename}"
-    gsg_path = f"{args.annotation_directory}/{args.gsg_filename}"
-
-    return {
-        "ngsg_path": ngsg_path,
-        "gsg_path": gsg_path,
-        "results_directory": args.results_directory,
+        "Glomeruli Sclerosed %": round(gsg_proportion, 4),
+        "95% Confidence Interval": confidence_interval,
     }
 
 
@@ -137,32 +91,34 @@ def main(configs: dict[str, str]) -> None:
     """Main."""
     print(configs)
     # Load annotations using JSON
-    with open(configs["ngsg_path"]) as file:
+    with open(configs.non_gsg_file) as file:
         ngsg = json.load(file)
-    with open(configs["gsg_path"]) as file:
+    with open(configs.gsg_file) as file:
         gsg = json.load(file)
 
     # Compute GS
     gs = compute_gs(ngsg, gsg)
-    print(gs)
 
-    # Save results to results-folder location (defaults to CWD)
-    with open(
-        f"{configs['results_directory']}/glomerulosclerosis.csv",
-        "w",
-        newline="",
-    ) as file:
-        # Use the CSV dictionary writer to store the results in the specified
-        # directory
-        writer = csv.DictWriter(file, fieldnames=gs.keys())
-        writer.writeheader()
-        writer.writerow(gs)
-    print("You made it! Congrats!")
-    print(gs)
-    print("Now. Let's print those pesky little configurations.")
-    print(configs)
+    # Print report
+    header = " " * 5 + "REPORT" + " " * 5 + "\n"
+    bar = "#" * 16 + "\n"
+    print(header + bar)
+    for key, value in gs.items():
+        print(f"{key}: {value}")
+
+    # # Save results to results-folder location (defaults to CWD)
+    # with open(
+    #     f"{configs['results_directory']}/glomerulosclerosis.csv",
+    #     "w",
+    #     newline="",
+    # ) as file:
+    #     # Use the CSV dictionary writer to store the results in the specified
+    #     # directory
+    #     writer = csv.DictWriter(file, fieldnames=gs.keys())
+    #     writer.writeheader()
+    #     writer.writerow(gs)
 
 
 if __name__ == "__main__":
-    configs = configurations()
+    configs = CLIArgumentParser().parse_args()
     main(configs)

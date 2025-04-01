@@ -18,8 +18,8 @@ setup(
     install_requires=[
         # scientific packages
         # 'nimfa>=1.3.2',
-        # 'numpy>=1.21.1',
-        # 'scipy>=0.19.0',
+        "numpy>=1.21.1",
+        "scipy>=0.19.0",
         # 'Pillow==9.5.0',
         # 'pandas>=0.19.2',
         # 'imageio>=2.3.0',
@@ -46,7 +46,7 @@ setup(
         # 'distributed>=1.21.6',
         # # large image sources
         # 'large-image[sources]',
-        # 'girder-slicer-cli-web',
+        "girder-slicer-cli-web",
         "girder-client",
         # # cli
         # 'ctk-cli',
