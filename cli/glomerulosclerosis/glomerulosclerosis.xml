@@ -12,21 +12,21 @@
     <label>IO</label>
     <description>Input/output parameters.</description>
     <file fileExtensions=".json" reference="inputImageFile">
-      <name>gsg_filename</name>
+      <name>gsg_file</name>
       <label>Sclerotic Glomeruli Annotation</label>
       <description>
       Annotation related to the sclerosed glomeruli (*.json)
       </description>
       <channel>input</channel>
       <index>0</index>
-      <longflag>gsg_filename</longflag>
+      <longflag>gsg_file</longflag>
     </file> 
       <file fileExtensions=".json" reference="inputImageFile">
-      <name>ngsg_filename</name>
+      <name>non_gsg_file</name>
       <label>Non-Sclerotic Glomeruli Annotation</label>
       <description>Annotation related to the non-sclerosed glomeruli (*.json)</description>
       <channel>input</channel>
-      <longflag>non_gsg_filename</longflag>
+      <longflag>non_gsg_file</longflag>
     </file> 
   </parameters>
 </executable>

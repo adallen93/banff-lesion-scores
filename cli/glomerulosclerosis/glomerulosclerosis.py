@@ -42,10 +42,9 @@ Author:
 
 # import csv
 import json
+import math
 from typing import Any
 
-import numpy as np
-import scipy.stats as stats
 from slicer_cli_web import CLIArgumentParser
 
 
@@ -56,10 +55,12 @@ def compute_gs(
     """Compute Glomerulosclerosis.
 
     Args:
-    non_globally_sclerotic_glomeruli (): JSON annotations for NGSG.
-    globally_sclerotic_glomeruli (): JSON annotations for GSG.
+      non_globally_sclerotic_glomeruli (dict[str, Any]): JSON annotations for
+      NGSG.
+      globally_sclerotic_glomeruli (dict[str, Any]): JSON annotations for GSG.
 
-    Returns (float): Proportion of glomeruli that have global sclerosis.
+    Returns (float):
+      Proportion of glomeruli that have global sclerosis.
     """
     count_ngsg = len(
         non_globally_sclerotic_glomeruli["annotation"]["elements"]
@@ -71,12 +72,7 @@ def compute_gs(
     gsg_proportion = count_gsg / n
 
     # Compute 95% confidence interval
-    lower_bound = gsg_proportion + stats.norm.ppf(0.025) * np.sqrt(
-        gsg_proportion * (1 - gsg_proportion) / n
-    )
-    upper_bound = gsg_proportion + stats.norm.ppf(0.975) * np.sqrt(
-        gsg_proportion * (1 - gsg_proportion) / n
-    )
+    lower_bound, upper_bound = wilson_interval(count_gsg, n)
     confidence_interval = f"[{round(lower_bound, 4)}, {round(upper_bound, 4)}]"
 
     return {
@@ -85,6 +81,50 @@ def compute_gs(
         "Glomeruli Sclerosed %": round(gsg_proportion, 4),
         "95% Confidence Interval": confidence_interval,
     }
+
+
+def wilson_interval(k: int, n: int) -> tuple[float, float]:
+    """Compute 95% Wilson score confidence interval for a binomial proportion.
+
+    Args:
+        k (int): Number of successes (e.g., number of sclerosed glomeruli)
+        n (int): Total number of trials (e.g., total glomeruli)
+
+    Returns:
+        (float, float): A tuple containing the lower and upper bounds of the
+        confidence interval.
+
+    Raises:
+        ValueError: If n is zero.
+
+    Reference:
+        https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
+    """
+    if n == 0:
+        raise ValueError(
+            "Total number of trials (n) must be greater than zero."
+        )
+
+    # Compute the sample proportion.
+    p_hat = k / n
+
+    # For a 95% confidence interval, z is typically 1.96.
+    z = 1.96
+
+    # Adjusted denominator.
+    denominator = 1 + (z**2 / n)
+
+    # Adjusted center.
+    center_adjusted = p_hat + (z**2 / (2 * n))
+
+    # The adjustment term.
+    adjustment = z * math.sqrt((p_hat * (1 - p_hat) / n) + (z**2 / (4 * n**2)))
+
+    # Compute lower and upper bounds.
+    lower_bound = (center_adjusted - adjustment) / denominator
+    upper_bound = (center_adjusted + adjustment) / denominator
+
+    return lower_bound, upper_bound
 
 
 def main(configs: dict[str, str]) -> None:
@@ -100,11 +140,12 @@ def main(configs: dict[str, str]) -> None:
     gs = compute_gs(ngsg, gsg)
 
     # Print report
-    header = " " * 5 + "REPORT" + " " * 5 + "\n"
-    bar = "#" * 16 + "\n"
-    print(header + bar)
+    bar = "#" * 42 + "\n"
+    title = " " * 18 + "REPORT" + " " * 18 + "\n"
+    print(bar + title)
     for key, value in gs.items():
         print(f"{key}: {value}")
+    print(bar)
 
     # # Save results to results-folder location (defaults to CWD)
     # with open(
